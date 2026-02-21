@@ -52,6 +52,7 @@ export const vehicle = pgTable("vehicle", {
   type: text("type").notNull(),
   capacity: integer("capacity").notNull(),
   status: vehicleStatusEnum("status").default("available").notNull(),
+  plate: text("plate").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
