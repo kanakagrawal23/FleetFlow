@@ -13,7 +13,7 @@ function ExpensesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState<{ type: "maintenance" | "fuel" | "other"; amount: number; description: string }>({ type: "maintenance", amount: 0, description: "" });
+  const [formData, setFormData] = useState<{ type: "fuel" | "other"; amount: number; description: string }>({ type: "fuel", amount: 0, description: "" });
 
   const fetchData = async () => {
     try {
@@ -41,7 +41,7 @@ function ExpensesPage() {
     try {
       await expenseApi.create(formData);
       setShowForm(false);
-      setFormData({ type: "maintenance", amount: 0, description: "" });
+      setFormData({ type: "fuel", amount: 0, description: "" });
       fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save expense");
@@ -90,10 +90,9 @@ function ExpensesPage() {
                 <label className="text-sm font-medium">Type</label>
                   <select
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value as "maintenance" | "fuel" | "other" })}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value as "fuel" | "other" })}
                   className="mt-1 w-full rounded-md border px-3 py-2"
                 >
-                  <option value="maintenance">Maintenance</option>
                   <option value="fuel">Fuel</option>
                   <option value="other">Other</option>
                 </select>

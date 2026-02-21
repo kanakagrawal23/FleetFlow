@@ -118,16 +118,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields: type, amount, description" }, { status: 400 });
     }
 
+    // Maintenance expenses should be logged via the Maintenance page (requires vehicleId)
     if (type === "maintenance") {
-      const result = await db.insert(service).values({
-        issue: description,
-        cost: parseInt(amount),
-      }).returning();
-      console.log("[EXPENSES API] Created service record:", result[0]);
-      return NextResponse.json({ ...result[0], expenseType: "maintenance" }, { status: 201 });
+      return NextResponse.json({ error: "Maintenance expenses should be logged via the Maintenance page" }, { status: 400 });
     }
 
-    return NextResponse.json({ error: "Invalid expense type. Supported: maintenance" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid expense type. Supported: fuel, other" }, { status: 400 });
   } catch (error) {
     console.error("[EXPENSES API] Error creating expense:", error);
     return NextResponse.json({ error: "Failed to create expense", details: String(error) }, { status: 500 });
