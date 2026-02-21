@@ -122,8 +122,8 @@ export default function LoginPage() {
           {/* Header / Brand */}
           <div className="bg-primary text-primary-foreground px-6 pt-8 pb-10 sm:px-8 sm:pt-10 sm:pb-12 text-center relative overflow-hidden">
             <div className="absolute inset-0 opacity-10 pointer-events-none">
-              <div className="absolute -top-[20%] -left-[10%] size-64 rounded-full border-[20px] border-white" />
-              <div className="absolute -bottom-[20%] -right-[10%] size-48 rounded-full border-[15px] border-white" />
+              <div className="absolute -top-[20%] -left-[10%] size-64 rounded-full border-white" />
+              <div className="absolute -bottom-[20%] -right-[10%] size-48 rounded-full border-white" />
             </div>
             <div className="relative z-10">
               <div className="inline-flex items-center justify-center size-14 sm:size-16 bg-primary-foreground/20 backdrop-blur-md rounded-xl sm:rounded-2xl mb-4 border border-primary-foreground/30 shadow-xl">
@@ -238,6 +238,7 @@ export default function LoginPage() {
                           type="text"
                           placeholder="Class A"
                           className="h-10"
+                          onChange={(e) => setLicenseCategory(e.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
