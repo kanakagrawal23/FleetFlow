@@ -1,5 +1,9 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, index, pgEnum, integer} from "drizzle-orm/pg-core";
+
+export const roleEnum = pgEnum("role", ["manager", "dispatcher", "safety", "analyst", "driver"]);
+
+export const driverStatusEnum = pgEnum("driver_status", ["available", "break", "trip"]);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -7,12 +11,26 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  role: roleEnum("role").default("driver").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
+
+export const driver = pgTable("driver", {
+  id: text("id").references(() => user.id).primaryKey(),
+  licenseNum: text("license_number").notNull(),
+  licenseCategory: text("license_category").notNull(),
+  status: driverStatusEnum("status").default("available").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+})
 
 export const session = pgTable(
   "session",
