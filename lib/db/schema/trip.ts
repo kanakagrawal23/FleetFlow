@@ -6,8 +6,8 @@ export const logTypeEnum = pgEnum("vehicle_status", ["service", "trip"]);
 export const log = pgTable("log", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   type: logTypeEnum("type").notNull(),
-  tripId: integer("trip_id").references(() => trip.id),
-  serviceId: integer("service_id").references(() => trip.id),
+  tripId: integer("trip_id").references(() => trip.id).unique(),
+  serviceId: integer("service_id").references(() => service.id).unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -17,6 +17,7 @@ export const log = pgTable("log", {
 
 export const service = pgTable("service", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  vehicleId: integer("vehicle_id").references(() => vehicle.id),
   cost: integer("cost").notNull(),
   issue: text("issue").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -33,6 +34,8 @@ export const trip = pgTable("trip", {
   origin: text("start").notNull(),
   destination: text("end").notNull(),
   distance: integer("distance").notNull(),
+  expenses: integer("expenses").default(0).notNull(),
+  revenue: integer("revenue").default(0).notNull(),
   deadline: timestamp("deadline").notNull(),
   finishDate: timestamp("finish_date"),
   driverId: text("driver_id").references(() => driver.id).notNull(),
@@ -51,6 +54,8 @@ export const vehicle = pgTable("vehicle", {
   name: text("name").notNull(),
   type: text("type").notNull(),
   capacity: integer("capacity").notNull(),
+  plate: text("plate").notNull().unique(),
+  odometer: integer("odometer").default(0).notNull(),
   status: vehicleStatusEnum("status").default("available").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
