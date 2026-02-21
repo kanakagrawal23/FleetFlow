@@ -17,7 +17,7 @@ export const log = pgTable("log", {
 
 export const service = pgTable("service", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  vehicleId: integer("vehicle_id").references(() => vehicle.id),
+  vehicleId: integer("vehicle_id").references(() => vehicle.id).notNull(),
   cost: integer("cost").notNull(),
   issue: text("issue").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

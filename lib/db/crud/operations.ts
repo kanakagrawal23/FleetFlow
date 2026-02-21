@@ -1,5 +1,5 @@
 import { desc, eq } from "drizzle-orm";
-import { db } from "./index";
+import { db } from "../index";
 import {
   driver,
   log,
@@ -7,7 +7,7 @@ import {
   trip,
   user,
   vehicle,
-} from "./schema";
+} from "../schema";
 
 // --- 1. Bulk listing logs (join with service, trip, driver, vehicle) ---
 
