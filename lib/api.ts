@@ -109,7 +109,8 @@ export const tripApi = {
 export const driverApi = {
   getAll: () => fetchApi<Driver[]>("/drivers"),
   getById: (id: string) => fetchApi<Driver>(`/drivers?id=${id}`),
-  create: (data: { email: string; password: string; name: string; licenseNum: string; licenseCategory: string; expiresAt: string }) =>
+  getUsersWithoutDrivers: () => fetchApi<{ id: string; name: string; email: string; role: string }[]>("/drivers/users"),
+  create: (data: { userId: string; licenseNum: string; licenseCategory: string; expiresAt: string }) =>
     fetchApi<{ user: Driver; driver: Driver }>("/drivers", { method: "POST", body: JSON.stringify(data) }),
   update: (id: string, data: Partial<Driver>) =>
     fetchApi<Driver>(`/drivers?id=${id}`, { method: "PUT", body: JSON.stringify(data) }),

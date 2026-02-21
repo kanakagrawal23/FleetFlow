@@ -30,9 +30,10 @@ export default function Sidebar() {
 	const pathname = usePathname();
 	const { data: session } = authClient.useSession();
 
-	const userRole = session?.user?.role as string;
+	const userRole = (session?.user?.role as string) || "";
+	
 	const allowedNavItems = navigation.filter(item => 
-		item.roles.includes(userRole) || item.roles.includes("admin")
+		userRole && item.roles.includes(userRole)
 	);
 
 	const handleLogout = async () => {

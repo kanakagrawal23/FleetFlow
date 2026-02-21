@@ -93,7 +93,7 @@ export async function GET_USERS_WITHOUT_DRIVERS(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  console.log("[DRIVERS API] POST request received - Create user + driver");
+  console.log("[DRIVERS API] POST request received - Create driver profile for existing user");
   try {
     const headerList = await headers();
     const session = await auth.api.getSession({ headers: headerList });
@@ -109,53 +109,38 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log("[DRIVERS API] Request body:", body);
 
-    const { email, password, name, licenseNum, licenseCategory, expiresAt } = body;
+    const { userId, licenseNum, licenseCategory, expiresAt } = body;
 
-    if (!email || !password || !name || !licenseNum || !licenseCategory || !expiresAt) {
-      return NextResponse.json({ error: "Missing required fields: email, password, name, licenseNum, licenseCategory, expiresAt" }, { status: 400 });
+    if (!userId || !licenseNum || !licenseCategory || !expiresAt) {
+      return NextResponse.json({ error: "Missing required fields: userId, licenseNum, licenseCategory, expiresAt" }, { status: 400 });
     }
 
-    // Check if user already exists
-    const existingUser = await db.select().from(user).where(eq(user.email, email));
-    if (existingUser.length > 0) {
-      return NextResponse.json({ error: "User with this email already exists" }, { status: 400 });
+    // Check if user exists
+    const existingUser = await db.select().from(user).where(eq(user.id, userId));
+    if (existingUser.length === 0) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Create user with better-auth signUpEmail (creates user + account with hashed password)
-    // Role is passed as additional field
-    const newUserResponse = await auth.api.signUpEmail({
-      body: {
-        email,
-        password,
-        name,
-        role: "driver",
-      },
-    });
-    
-    // signUpEmail returns user directly (not wrapped in .user)
-    const newUser = newUserResponse.user;
-    
-    // Update the user's role to driver
-    await db.update(user)
-      .set({ role: "driver" })
-      .where(eq(user.id, newUser.id));
-    
-    console.log("[DRIVERS API] Created user via better-auth:", newUser.id);
+    // Check if driver profile already exists
+    const existingDriver = await db.select().from(driver).where(eq(driver.id, userId));
+    if (existingDriver.length > 0) {
+      return NextResponse.json({ error: "Driver profile already exists for this user" }, { status: 400 });
+    }
 
     // Create driver profile with license info
     const newDriver = await db.insert(driver).values({
-      id: newUser.id,
+      id: userId,
       licenseNum,
       licenseCategory,
       expiresAt: new Date(expiresAt),
       status: "available",
     }).returning();
 
-    console.log("[DRIVERS API] Created driver profile:", { userId: newUser.id, email });
+    console.log("[DRIVERS API] Created driver profile:", { userId, licenseNum });
     return NextResponse.json({ 
       message: "Driver created successfully",
-      user: newUser,
-      driver: newDriver[0]
+      driver: newDriver[0],
+      user: existingUser[0]
     }, { status: 201 });
     
   } catch (error) {

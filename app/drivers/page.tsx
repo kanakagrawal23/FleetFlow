@@ -5,9 +5,9 @@ import { driverApi, tripApi, type Driver, type Trip } from "@/lib/api";
 import ProtectedRoute from "@/components/protected-route";
 import DashboardLayout from "@/components/layouts/dashboard-layout";
 import { Button } from "@/components/ui/button";
-import { Loader2, Pencil, Plus } from "lucide-react";
+import { Loader2, Pencil, Plus, User } from "lucide-react";
 
-interface User {
+interface PendingUser {
   id: string;
   name: string;
   email: string;
@@ -16,24 +16,28 @@ interface User {
 
 function DriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<PendingUser | null>(null);
   const [formData, setFormData] = useState<{ status: "available" | "break" | "trip"; licenseCategory: string; licenseNum: string }>({ status: "available", licenseCategory: "", licenseNum: "" });
-  const [newDriverData, setNewDriverData] = useState({ name: "", email: "", password: "", licenseNum: "", licenseCategory: "", expiresAt: "" });
+  const [newDriverData, setNewDriverData] = useState({ userId: "", licenseNum: "", licenseCategory: "", expiresAt: "" });
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [driversData, tripsData] = await Promise.all([
+      const [driversData, tripsData, pendingData] = await Promise.all([
         driverApi.getAll(),
         tripApi.getAll(),
+        driverApi.getUsersWithoutDrivers(),
       ]);
       setDrivers(driversData);
       setTrips(tripsData);
+      setPendingUsers(pendingData);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
@@ -61,6 +65,7 @@ function DriversPage() {
 
   const handleEditClick = (driver: Driver) => {
     setEditingDriver(driver);
+    setSelectedUser(null);
     setFormData({
       status: driver.status || "available",
       licenseCategory: driver.licenseCategory || "",
@@ -75,12 +80,19 @@ function DriversPage() {
       await driverApi.create(newDriverData);
       setShowForm(false);
       setIsCreating(false);
-      setNewDriverData({ name: "", email: "", password: "", licenseNum: "", licenseCategory: "", expiresAt: "" });
+      setNewDriverData({ userId: "", licenseNum: "", licenseCategory: "", expiresAt: "" });
+      setSelectedUser(null);
       fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create driver");
       setIsCreating(false);
     }
+  };
+
+  const handleSelectUser = (userId: string) => {
+    const user = pendingUsers.find((u) => u.id === userId);
+    setSelectedUser(user || null);
+    setNewDriverData({ ...newDriverData, userId });
   };
 
   const getDriverStats = (driverId: string) => {
@@ -104,48 +116,44 @@ function DriversPage() {
     <div className="p-8">
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Driver Management</h1>
-        <Button onClick={() => setShowForm(true)}>
-          <Plus className="mr-2 size-4" />
-          Add Driver
-        </Button>
+        {pendingUsers.length > 0 && (
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="mr-2 size-4" />
+            Add Driver
+          </Button>
+        )}
       </div>
 
       {showForm && !editingDriver && (
         <div className="mb-8 rounded-lg border bg-card p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-semibold">Create New Driver</h2>
+          <h2 className="mb-4 text-xl font-semibold">Create Driver Profile</h2>
           <form onSubmit={handleCreateSubmit} className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="text-sm font-medium">Name</label>
-                <input
-                  type="text"
+                <label className="text-sm font-medium">Select User</label>
+                <select
                   required
-                  value={newDriverData.name}
-                  onChange={(e) => setNewDriverData({ ...newDriverData, name: e.target.value })}
+                  value={newDriverData.userId}
+                  onChange={(e) => handleSelectUser(e.target.value)}
                   className="mt-1 w-full rounded-md border px-3 py-2"
-                />
+                >
+                  <option value="">Select a user...</option>
+                  {pendingUsers.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} ({user.email})
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <input
-                  type="email"
-                  required
-                  value={newDriverData.email}
-                  onChange={(e) => setNewDriverData({ ...newDriverData, email: e.target.value })}
-                  className="mt-1 w-full rounded-md border px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Password</label>
-                <input
-                  type="password"
-                  required
-                  minLength={8}
-                  value={newDriverData.password}
-                  onChange={(e) => setNewDriverData({ ...newDriverData, password: e.target.value })}
-                  className="mt-1 w-full rounded-md border px-3 py-2"
-                />
-              </div>
+              {selectedUser && (
+                <div className="flex items-center rounded-lg bg-muted p-4">
+                  <User className="mr-3 size-5 text-muted-foreground" />
+                  <div>
+                    <div className="font-medium">{selectedUser.name}</div>
+                    <div className="text-sm text-muted-foreground">{selectedUser.email}</div>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="text-sm font-medium">License Number</label>
                 <input
@@ -179,11 +187,11 @@ function DriversPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button type="submit" disabled={isCreating}>
+              <Button type="submit" disabled={isCreating || !newDriverData.userId}>
                 {isCreating ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
                 Create Driver
               </Button>
-              <Button type="button" variant="outline" onClick={() => { setShowForm(false); setNewDriverData({ name: "", email: "", password: "", licenseNum: "", licenseCategory: "", expiresAt: "" }); }}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => { setShowForm(false); setSelectedUser(null); setNewDriverData({ userId: "", licenseNum: "", licenseCategory: "", expiresAt: "" }); }}>Cancel</Button>
             </div>
           </form>
         </div>
@@ -242,7 +250,11 @@ function DriversPage() {
       ) : drivers.length === 0 ? (
         <div className="text-center text-muted-foreground py-12">
           <p className="text-lg mb-2">No drivers found</p>
-          <p className="text-sm">Click "Add Driver" to create a new driver with login credentials.</p>
+          {pendingUsers.length > 0 ? (
+            <p className="text-sm">Click "Add Driver" to assign driver profiles to existing users.</p>
+          ) : (
+            <p className="text-sm">No users with driver role available. Users need to sign up first, then you can add driver profiles.</p>
+          )}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
