@@ -63,3 +63,8 @@ nextjs-starter-kit/
 - `bun run check-types`: Check TypeScript types across all apps
 - `bun run db:push`: Push schema changes to database
 - `bun run db:studio`: Open database studio UI
+
+## Demo Video
+
+You can watch the full project demonstration here:  
+https://drive.google.com/file/d/1PzVKqXXczqIVq3hNFN0DZ8vSTdRZfvb6/view
